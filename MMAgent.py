@@ -7,9 +7,7 @@ class MinMaxAgent:
         'n': 3,
         'b': 3,
         'r': 5,
-        'q': 9,
-        'k': 13
-        #el rey en sí no tiene valor, pero se le asigna este valor arbitrario , pues un valor 0 es casilla vacía
+        'q': 9
     }
     def __init__(self,max_depth=3):
         #more depth = more intelligent = more time to decide
@@ -20,8 +18,17 @@ class MinMaxAgent:
         best_move = None
         for legal_move in board.legal_moves:
             move = chess.Move.from_uci(str(legal_move))
+            score = 0
+            if board.gives_check(legal_move):
+                score += 10
             board.push(move)
+            if board.is_checkmate():
+                #this is the best move , no way to improve it
+                return legal_move
             score = max(best_move_score, self.__minMaxEval(board))
+            # add more to the score if it gives check
+            
+
             board.pop()
             if score > best_move_score:
                 best_move_score = score
