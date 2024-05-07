@@ -17,3 +17,4 @@
 
 - <https://www.youtube.com/watch?v=aOwvRvTPQrs>
 - <https://python-chess.readthedocs.io/en/latest/core.html#moves>
+- <https://github.com/rayanramoul/Arcane-Chess>
