@@ -7,7 +7,8 @@ class MinMaxAgent:
         'n': 3,
         'b': 3,
         'r': 5,
-        'q': 9
+        'q': 9,
+        'k':15,
     }
     def __init__(self,max_depth=3):
         #more depth = more intelligent = more time to decide
@@ -20,7 +21,7 @@ class MinMaxAgent:
             move = chess.Move.from_uci(str(legal_move))
             score = 0
             if board.gives_check(legal_move):
-                score += 10
+                score += 20
             board.push(move)
             if board.is_checkmate():
                 #this is the best move , no way to improve it
