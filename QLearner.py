@@ -38,20 +38,20 @@ class DEEPQ:
         self.epsilon_decrease = epsilon_decrease
         self.gamma = gamma
         self.epsilon = epsilon
-        self.graph = tf.getdefault_graph()
+        self.graph = tf.compat.v1.get_default_graph()
         self.state =  np.zeros((1,65))
         #initalize the Neural Network
         self.general_moves = {} if not general_moves else general_moves #movimientos ya aprendidos 
         if not existing_model:
             self.model = Sequential()
-            self.model.add(Dense(20, input_shape=(65,) , init='uniform', activation='relu'))
-            self.model.add(Dense(18, init='uniform', activation='relu'))
-            self.model.add(Dense(18, init='uniform', activation='relu'))
-            self.model.add(Dense(18, init='uniform', activation='relu'))
-            self.model.add(Dense(18, init='uniform', activation='relu'))
-            self.model.add(Dense(10, init='uniform', activation='relu'))
-            self.model.add(Dense(10, init='uniform', activation='relu'))
-            self.model.add(Dense(1, init='uniform', activation='relu'))    # Same number of outputs as possible actions
+            self.model.add(Dense(20, input_shape=(65,) , activation='relu'))
+            self.model.add(Dense(18, activation='relu'))
+            self.model.add(Dense(18,  activation='relu'))
+            self.model.add(Dense(18,  activation='relu'))
+            self.model.add(Dense(18,  activation='relu'))
+            self.model.add(Dense(10,  activation='relu'))
+            self.model.add(Dense(10,  activation='relu'))
+            self.model.add(Dense(1,  activation='relu'))    # Same number of outputs as possible actions
             self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy']) #Compiling the model
         else:
             self.model = model_from_json(existing_model)
@@ -77,30 +77,29 @@ class DEEPQ:
         None: there is no move to be pushed ( extremely unlikely )
         '''
         if allow_epsilon:
-            if np.random.random <= self.epsilon:
-                return board.legal_moves[np.random.randint(0,board.legal_moves.count())]
+            if np.random.rand() <= self.epsilon:
+                t = np.random.randint(0,board.legal_moves.count())
+                p = 0
+                for _ in board.legal_moves:
+                    if p == t:
+                        return _
+                    p+=1
         #factor
         Q = {} #the q table for the movements
         factor = 1 if board.turn else -1 
         # uptade the current board state
-        for i in range(chess.SQUARES):
-            self.state = factor*DEEPQ.prices[str(board.piece_at(i))]
+        for i in chess.SQUARES:
+            self.state[0][i] = factor*DEEPQ.prices[str(board.piece_at(i))]
         # check the legal moves
         for move in board.legal_moves:
+            self.state[0][64] = self._get_move_id(str(move))
+            Q[str(move)] = self.model.predict(self.state)
             if not train_mode:
-                try :
-                    self.state[0][64] = self.general_moves[str(move)]
-                except KeyError:
-                    self.general_moves[str(move)] = len(self.general_moves)
-                    self.state[0][64] = self.general_moves[str(move)]
                 with self.graph.as_default():
-                    Q[str(move)] = self.model.predict(self.state)
-            else:
-                 self.state[0][64] = self._get_move_id(move)
-                 Q[str(move)] = self.model.predict(self.state)
+                    Q[str(move)] = self.model.predict(self.state)                 
 
         best = max(Q.items(),key=operator.itemgetter(1))[0]
-        return chess.Move().from_uci(best)
+        return chess.Move.from_uci(best)
     def fit_finisher(self,win_states, win_actions, l_states, l_actions,win_weights=1, l_weights=-1.2): 
         '''
         fit the model given the states and moves
@@ -124,10 +123,10 @@ class DEEPQ:
         '''
         #reward all the moves that lead to victory
         for i in range(len(win_states)):
-            win_states[i][0][64]=self.get_int(win_actions[i])
+            win_states[i][0][64]=self._get_move_id(win_actions[i])
             self.model.train_on_batch(np.array(win_states[i]),self.model.predict(np.array(win_states[i]))+win_weights*(self.gamma*i))
         for i in range(len(l_states)):
-            l_states[i][0][64]=self.get_int(l_actions[i])
+            l_states[i][0][64]=self._get_move_id(l_actions[i])
             self.model.train_on_batch(np.array(l_states[i]),self.model.predict(np.array(l_states[i]))+l_weights*(self.gamma*i))
         self.epsilon -= self.epsilon_decrease
     def _get_move_id(self, move:str):
@@ -154,7 +153,7 @@ class DEEPQ:
             black_states = []
             black_moves = []
             while not board.is_game_over():
-                move = self.pick_move(board,allow_epsilon=True)
+                move = self.pick_move(board,allow_epsilon=True,train_mode=True)
                 if board.turn:
                     white_moves.append(str(move))
                     white_states.append(np.array(self.state,copy=True))
