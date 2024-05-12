@@ -8,15 +8,12 @@ import operator
 import numpy as np
 import pickle 
 from keras.models import Sequential      # One layer after the other
-from keras.layers import Dense, Flatten  # Dense layers are fully connected layers, Flatten layers flatten out multidimensional inputs
+from keras.layers import Dense  
 import tensorflow as tf
 import argparse
 import os
 from keras.models import model_from_json
-
-
-
-
+from MMAgent import MinMaxAgent
 class DEEPQ:
     prices={
             'p':1,
@@ -33,11 +30,12 @@ class DEEPQ:
             'K':-90,
             'None':0
         }
-    def __init__(self,epsilon=0.9,gamma=0.005,existing_model = None,general_moves = None):
+    def __init__(self,epsilon=0.9,gamma=0.005,epsilon_decrease=0.0002,existing_model = None,general_moves = None):
         '''
         For simplifiaction sake, the states is a 1d array of values for each square
         the value is given by the prices dictionary
         '''
+        self.epsilon_decrease = epsilon_decrease
         self.gamma = gamma
         self.epsilon = epsilon
         self.graph = tf.getdefault_graph()
@@ -60,7 +58,7 @@ class DEEPQ:
             self.model.load_weights("model.h5")
             self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
             self.model._make_predict_function()
-    def pick_move(self,board:chess.Board,allow_epsilon=False):
+    def pick_move(self,board:chess.Board,allow_epsilon=False,train_mode=False):
         '''
         returns the best move based on the current board state
         ...
@@ -71,6 +69,8 @@ class DEEPQ:
         allow_epsilon: boolean
             default False
             allows epsilon to be used for random moves
+        train_mode : boolean
+            bypasses the usage of tesnroflow graph when predicting moves
         Returns
         ------
         move : chess.Move object to be pushed to the board
@@ -87,17 +87,21 @@ class DEEPQ:
             self.state = factor*DEEPQ.prices[str(board.piece_at(i))]
         # check the legal moves
         for move in board.legal_moves:
-            try :
-                self.state[0][64] = self.general_moves[str(move)]
-            except KeyError:
-                self.general_moves[str(move)] = len(self.general_moves)
-                self.state[0][64] = self.general_moves[str(move)]
-            with self.graph.as_default():
-                Q[str(move)] = self.model.predict(self.state)
+            if not train_mode:
+                try :
+                    self.state[0][64] = self.general_moves[str(move)]
+                except KeyError:
+                    self.general_moves[str(move)] = len(self.general_moves)
+                    self.state[0][64] = self.general_moves[str(move)]
+                with self.graph.as_default():
+                    Q[str(move)] = self.model.predict(self.state)
+            else:
+                 self.state[0][64] = self._get_move_id(move)
+                 Q[str(move)] = self.model.predict(self.state)
 
         best = max(Q.items(),key=operator.itemgetter(1))[0]
         return chess.Move().from_uci(best)
-    def fit(self,win_states, win_actions, l_states, l_actions,win_weights=1, l_weights=-1.2): 
+    def fit_finisher(self,win_states, win_actions, l_states, l_actions,win_weights=1, l_weights=-1.2): 
         '''
         fit the model given the states and moves
         it will punish any move on the looser input
@@ -125,7 +129,7 @@ class DEEPQ:
         for i in range(len(l_states)):
             l_states[i][0][64]=self.get_int(l_actions[i])
             self.model.train_on_batch(np.array(l_states[i]),self.model.predict(np.array(l_states[i]))+l_weights*(self.gamma*i))
-
+        self.epsilon -= self.epsilon_decrease
     def _get_move_id(self, move:str):
         #giving the id of the move as int value for the neural network
         try:
@@ -133,4 +137,37 @@ class DEEPQ:
         except KeyError:
             self.general_moves[move] = len(self.general_moves)
             return self.general_moves[move]
-    
+    def _export_self(self):
+        with open('generalized_moves.json', 'w') as fp:   # Save the mapping Move/Index to be used on developement
+            json.dump(self.general_moves, fp)
+        model_json = self.model.to_json()
+        with open("model.json", "w") as json_file:
+            json_file.write(model_json)
+        graph = tf.get_default_graph()
+        with graph.as_default():
+            self.model.save_weights("model.h5")
+    def train_self(self,iterations=1000):
+        board = chess.Board()
+        for i in range(iterations):
+            white_states = []
+            white_moves = []
+            black_states = []
+            black_moves = []
+            while not board.is_game_over():
+                move = self.pick_move(board,allow_epsilon=True)
+                if board.turn:
+                    white_moves.append(str(move))
+                    white_states.append(np.array(self.state,copy=True))
+                else: #train against a min max
+                    black_moves.append(str(move))
+                    black_states.append(np.array(self.state,copy=True))
+                board.push(chess.Move.from_uci(str(move)))
+            if board.result()=="1-0":
+                self.fit_finisher(white_states, white_moves, black_states, black_moves)
+            elif board.result()=="0-1":
+                self.fit_finisher(black_states, black_moves, white_states, white_moves)
+            board.reset_board()
+        self._export_self()
+
+tmodel = DEEPQ()
+tmodel.train_self()
