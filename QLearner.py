@@ -142,7 +142,7 @@ class DEEPQ:
         model_json = self.model.to_json()
         with open("model.json", "w") as json_file:
             json_file.write(model_json)
-        graph = tf.get_default_graph()
+        graph = tf.compat.v1.get_default_graph()
         with graph.as_default():
             self.model.save_weights("model.h5")
     def train_self(self,iterations=1000):
