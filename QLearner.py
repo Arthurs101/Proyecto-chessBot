@@ -12,7 +12,7 @@ from keras.layers import Dense
 import tensorflow as tf
 import argparse
 import os
-from keras.models import model_from_json
+from keras.models import load_model
 from MMAgent import MinMaxAgent
 class DEEPQ:
     prices={
@@ -41,7 +41,12 @@ class DEEPQ:
         self.graph = tf.compat.v1.get_default_graph()
         self.state =  np.zeros((1,65))
         #initalize the Neural Network
-        self.general_moves = {} if not general_moves else general_moves #movimientos ya aprendidos 
+        if not general_moves:
+            self.general_moves = {}  
+        else:
+            json_file = open(general_moves)
+            json_str = json_file.read()
+            self.general_moves=json.loads(json_str)
         if not existing_model:
             self.model = Sequential()
             self.model.add(Dense(20, input_shape=(65,) , activation='relu'))
@@ -54,11 +59,10 @@ class DEEPQ:
             self.model.add(Dense(1,  activation='relu'))    # Same number of outputs as possible actions
             self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy']) #Compiling the model
         else:
-            self.model = model_from_json(existing_model)
-            self.model.load_weights("model.h5")
+            self.model = load_model(existing_model)
             self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-            self.model._make_predict_function()
-    def pick_move(self,board:chess.Board,allow_epsilon=False,train_mode=False):
+            self.model.make_predict_function()
+    def pick_move(self,board:chess.Board,allow_epsilon=False):
         '''
         returns the best move based on the current board state
         ...
@@ -94,9 +98,6 @@ class DEEPQ:
         for move in board.legal_moves:
             self.state[0][64] = self._get_move_id(str(move))
             Q[str(move)] = self.model.predict(self.state)
-            if not train_mode:
-                with self.graph.as_default():
-                    Q[str(move)] = self.model.predict(self.state)                 
 
         best = max(Q.items(),key=operator.itemgetter(1))[0]
         return chess.Move.from_uci(best)
@@ -139,12 +140,8 @@ class DEEPQ:
     def _export_self(self):
         with open('generalized_moves.json', 'w') as fp:   # Save the mapping Move/Index to be used on developement
             json.dump(self.general_moves, fp)
-        model_json = self.model.to_json()
-        with open("model.json", "w") as json_file:
-            json_file.write(model_json)
-        graph = tf.compat.v1.get_default_graph()
-        with graph.as_default():
-            self.model.save_weights("model.h5")
+        self.model.save("Qlearner.keras")
+
     def train_self(self,iterations=1000):
         board = chess.Board()
         for i in range(iterations):
@@ -153,7 +150,7 @@ class DEEPQ:
             black_states = []
             black_moves = []
             while not board.is_game_over():
-                move = self.pick_move(board,allow_epsilon=True,train_mode=True)
+                move = self.pick_move(board,allow_epsilon=True)
                 if board.turn:
                     white_moves.append(str(move))
                     white_states.append(np.array(self.state,copy=True))
@@ -168,5 +165,12 @@ class DEEPQ:
             board.reset_board()
         self._export_self()
 
-tmodel = DEEPQ()
-tmodel.train_self()
+# tmodel = DEEPQ()
+# tmodel.train_self()
+
+#TESTING THE IMPORT 
+# board = chess.Board()
+# model = DEEPQ(existing_model='Qlearner.keras',general_moves='generalized_moves.json')
+# move = model.pick_move(board)
+# board.push(move)
+# print(board)
