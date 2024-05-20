@@ -18,7 +18,7 @@ class MinMaxAgent:
         self.epsilon = epsilon
     
     def pick_move(self ,board ):
-        best_move_score = -1000000
+        best_move_score = -math.inf
         best_move = None
         if np.random.rand() <= self.epsilon:
                 t = np.random.randint(0,board.legal_moves.count())

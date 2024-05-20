@@ -165,7 +165,7 @@ class DEEPQ:
         self._export_self()
     def train_with_agent(self,iterations=1000):
         board = chess.Board()
-        trainer = MinMaxAgent(max_depth=4)
+        trainer = MinMaxAgent(max_depth=2)
         for i in range(iterations):
             q_plays_white = random.choice([True,False])
             white_states = []
@@ -219,8 +219,8 @@ class DEEPQ:
 # tmodel.train_self()
 
 #TESTING THE IMPORT 
-# model = DEEPQ(existing_model='Qlearner.keras',general_moves='generalized_moves.json')
-# model.train_self()
+model = DEEPQ(existing_model='Qlearner.keras',general_moves='generalized_moves.json')
+model.train_with_agent()
 # move = model.pick_move(board)
 # board.push(move)
 # print(board)
