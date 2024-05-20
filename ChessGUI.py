@@ -1,7 +1,6 @@
 import pygame
 from chess import Board
 
-
 class GUI:
 
     def __init__(self) -> None:
@@ -12,7 +11,7 @@ class GUI:
         pygame.font.init()
         self.screen = pygame.display.set_mode([self.WIDTH, self.HEIGHT])
         self.font = pygame.font.Font('freesansbold.ttf', 10)
-        self.big_font = pygame.font.Font('freesansbold.ttf', 25)
+        self.big_font = pygame.font.Font('freesansbold.ttf', 20)
         self.timer = pygame.time.Clock()
         self.fps = 60
         self.pieces = {
@@ -80,10 +79,28 @@ class GUI:
         mode = None
         while mode is None:
             self.screen.fill(self.BACKGROUND_COLOR)
-            self.draw_text('Select Mode', self.big_font, 'black', self.screen, 80, 100)
-            self.draw_text('1. Player vs Minimax Agent', self.big_font, 'black', self.screen, 20, 200)
-            self.draw_text('2. Player vs Q-learning Agent', self.big_font, 'black', self.screen, 20, 250)
-            self.draw_text('3. Minimax Agent vs Q-learning Agent', self.big_font, 'black', self.screen, 20, 300)
+            # Draw chessboard background
+            for row in range(8):
+                for col in range(8):
+                    color = 'white' if (row + col) % 2 == 0 else 'gray'
+                    pygame.draw.rect(self.screen, color, [col * 50, row * 50, 50, 50])
+            # Draw text with larger and more prominent letters
+            self.draw_text('Select Mode', self.big_font, 'black', self.screen, 100, 20)
+            self.draw_text('1. Player vs Minimax Agent', self.big_font, 'black', self.screen, 20, 100)
+            self.draw_text('2. Player vs Q-learning Agent', self.big_font, 'black', self.screen, 20, 150)
+            self.draw_text('3. Minimax Agent vs Q-learning Agent', self.big_font, 'black', self.screen, 20, 200)
+            # Add images of the pieces in their initial positions
+            for piece, (row, col) in [('R', (7, 0)), ('N', (7, 1)), ('B', (7, 2)), ('Q', (7, 3)), ('K', (7, 4)),
+                                    ('B', (7, 5)), ('N', (7, 6)), ('R', (7, 7)),
+                                    ('P', (6, 0)), ('P', (6, 1)), ('P', (6, 2)), ('P', (6, 3)), ('P', (6, 4)),
+                                    ('P', (6, 5)), ('P', (6, 6)), ('P', (6, 7)),
+                                    ('r', (0, 0)), ('n', (0, 1)), ('b', (0, 2)), ('q', (0, 3)), ('k', (0, 4)),
+                                    ('b', (0, 5)), ('n', (0, 6)), ('r', (0, 7)),
+                                    ('p', (1, 0)), ('p', (1, 1)), ('p', (1, 2)), ('p', (1, 3)), ('p', (1, 4)),
+                                    ('p', (1, 5)), ('p', (1, 6)), ('p', (1, 7))]:
+                self.screen.blit(self.pieces[piece], (col * 50 + 5, row * 50 + 5))
+            # Text to continue
+            self.draw_text('Press 1, 2 or 3 to continue', self.font, 'black', self.screen, 20, 380)
             pygame.display.flip()
 
             for event in pygame.event.get():
@@ -93,15 +110,11 @@ class GUI:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_1:
                         mode = 'Player vs MinMAx'
-                    
                     elif event.key == pygame.K_2:
                         mode = 'Player vs Q-Learning'
-
                     elif event.key == pygame.K_3:
                         mode = 'MinMax vs Q-Learning'
-                    
                     else:
                         continue
-                        
-        
+
         return mode
