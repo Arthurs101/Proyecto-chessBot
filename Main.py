@@ -5,7 +5,7 @@ from QLearner import DEEPQ
 import time
 # Initialize chess board and agents
 board = chess.Board()
-minmax_agent = MinMaxAgent()
+minmax_agent = MinMaxAgent(max_depth=4)
 qlearning_agent = DEEPQ(general_moves='generalized_moves.json')
 gui = GUI()
 mode = gui.mode_selection_screen()

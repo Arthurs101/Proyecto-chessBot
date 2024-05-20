@@ -1,6 +1,6 @@
 # Source code of python agent
 import chess
-
+import math
 class MinMaxAgent:
     chess_Scores = {
         'p': 1,
@@ -36,7 +36,7 @@ class MinMaxAgent:
                 best_move = move
         return best_move
     
-    def __minMaxEval(self,board: chess.Board,is_max=False,iter=1):
+    def __minMaxEval(self,board: chess.Board,is_max=False,iter=1,alpha=-math.inf,beta=math.inf):
         """
         Returns the best possible move based on legals moves available
 
@@ -69,9 +69,14 @@ class MinMaxAgent:
 
             # calculating the min value for the particular node
             if is_max:    
-                best_score = max(best_score, self.__minMaxEval(board, is_max=False , iter= iter + 1))
+                best_score = max(best_score, self.__minMaxEval(board, is_max=False , iter= iter + 1,alpha=alpha,beta=beta))
+                alpha = max (best_score,alpha)
             else:
-                best_score = min(best_score, self.__minMaxEval(board, is_max=True , iter= iter + 1))
+                best_score = min(best_score, self.__minMaxEval(board, is_max=True , iter= iter + 1,alpha=alpha,beta=beta))
+                beta = min (best_score, beta)
+            if beta <= alpha:
+                board.pop()
+                break
                 
             # undoing the last move, so that we can evaluate next legal moves
             board.pop()
