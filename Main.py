@@ -47,36 +47,36 @@ while run:
     
     gui.draw_pieces(board)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        elif event.type == pygame.MOUSEBUTTONDOWN and user_turn:
-            x, y = gui.get_board_pos(pygame.mouse.get_pos())
-            square = chess.square(x, y)  # Adjust for 0-indexed board starting from top left
-            if selected_piece is not None:
-                move = chess.Move(selected_piece, square)
-                if move in board.legal_moves:
-                    next_on_check = board.gives_check(move)
-                    board.push(move)
-                    selected_piece = None
-                    user_turn = False
-                    last_mover = "Player"
-                    print("User move made, Turn of the AI")
-                elif chess.Move(selected_piece, square,promotion=5) in board.legal_moves:
-                    #try a promotion, if valid then has to select the promotion
-                    promotion =  gui.promo_selection_screen()
-                    board.push(chess.Move(selected_piece, square,promotion=promotion))
-                    user_turn = False
-                    last_mover = "Player"
-                    print("User move made, Turn of the AI")
+    if user_turn:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = gui.get_board_pos(pygame.mouse.get_pos())
+                square = chess.square(x, y)  # Adjust for 0-indexed board starting from top left
+                if selected_piece is not None:
+                    move = chess.Move(selected_piece, square)
+                    if move in board.legal_moves:
+                        next_on_check = board.gives_check(move)
+                        board.push(move)
+                        selected_piece = None
+                        user_turn = False
+                        last_mover = "Player"
+                        print("User move made, Turn of the AI")
+                    elif chess.Move(selected_piece, square,promotion=5) in board.legal_moves:
+                        #try a promotion, if valid then has to select the promotion
+                        promotion =  gui.promo_selection_screen()
+                        board.push(chess.Move(selected_piece, square,promotion=promotion))
+                        user_turn = False
+                        last_mover = "Player"
+                        print("User move made, Turn of the AI")
+                    else:
+                        print("Invalid move, try again")
+                        selected_piece = None  # Reset selected piece if an invalid move is made
                 else:
-                    print("Invalid move, try again")
-                    selected_piece = None  # Reset selected piece if an invalid move is made
-            else:
-                if board.piece_at(square) and board.piece_at(square).color == chess.WHITE:
-                    selected_piece = square
-
-    if not user_turn:
+                    if board.piece_at(square) and board.piece_at(square).color == chess.WHITE:
+                        selected_piece = square
+    else:
         if mode == 'Player vs MinMAx':
             if not ai_move(minmax_agent, board):
                 print(last_mover + " wins!")
@@ -109,8 +109,6 @@ while run:
                 if not ai_move(qlearning_agent, board):
                     print(last_mover + " wins!")
                     run = False
-
-
     # Check for game over
     if board.is_game_over():
         result = board.result()
@@ -126,5 +124,6 @@ while run:
         gui.draw_pieces(board)
         run = False   
     pygame.display.flip()
+
 time.sleep(4)
 pygame.quit()
