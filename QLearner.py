@@ -1,6 +1,7 @@
 '''
 Clase constructora para el agente inteligente
 '''
+import random
 import chess
 import json
 import operator
@@ -98,10 +99,7 @@ class DEEPQ:
 
         best = max(Q.items(),key=operator.itemgetter(1))[0]
         move = chess.Move.from_uci(best)
-        if move:
-            return move
-        else:
-            return None #very unlikely
+        return move
     def fit_finisher(self,win_states, win_actions, l_states, l_actions,win_weights=1, l_weights=-1.2): 
         '''
         fit the model given the states and moves
@@ -158,20 +156,71 @@ class DEEPQ:
                 else: #train against a min max
                     black_moves.append(str(move))
                     black_states.append(np.array(self.state,copy=True))
-                board.push(chess.Move.from_uci(str(move)))
+                board.push(move)
             if board.result()=="1-0":
                 self.fit_finisher(white_states, white_moves, black_states, black_moves)
             elif board.result()=="0-1":
                 self.fit_finisher(black_states, black_moves, white_states, white_moves)
             board.reset_board()
         self._export_self()
+    def train_with_agent(self,iterations=1000):
+        board = chess.Board()
+        trainer = MinMaxAgent(max_depth=4)
+        for i in range(iterations):
+            q_plays_white = random.choice([True,False])
+            white_states = []
+            white_moves = []
+            black_states = []
+            black_moves = []
+            if q_plays_white:
+                while not board.is_game_over():
+                    move = None
+                    if board.turn:
+                        move = self.pick_move(board,allow_epsilon=True)
+                        white_moves.append(str(move))
+                        white_states.append(np.array(self.state,copy=True))
+                    else: #train against a min max
+                        trainer.pick_move(board)
+                        black_moves.append(str(move))
+                        black_states.append(np.array(self.state,copy=True))
+                    if not move:
+                        break
+                    else:
+                        board.push(move)
+                if board.result()=="1-0":
+                    self.fit_finisher(white_states, white_moves, black_states, black_moves)
+                elif board.result()=="0-1":
+                    self.fit_finisher(black_states, black_moves, white_states, white_moves)
+                board.reset_board()
+            else:
+                while not board.is_game_over():
+                    move = None
+                    if board.turn:
+                        move = trainer.pick_move(board)
+                        white_moves.append(str(move))
+                        white_states.append(np.array(self.state,copy=True))
+                    else: #train against a min max
+                        move = self.pick_move(board,allow_epsilon=True)
+                        black_moves.append(str(move))
+                        black_states.append(np.array(self.state,copy=True))
+                    if not move:
+                        break
+                    else:
+                        board.push(move)
+                if board.result()=="1-0":
+                    self.fit_finisher(white_states, white_moves, black_states, black_moves)
+                elif board.result()=="0-1":
+                    self.fit_finisher(black_states, black_moves, white_states, white_moves)
+                board.reset_board()
+
+        self._export_self()
 
 # tmodel = DEEPQ()
 # tmodel.train_self()
 
 #TESTING THE IMPORT 
-# board = chess.Board()
 # model = DEEPQ(existing_model='Qlearner.keras',general_moves='generalized_moves.json')
+# model.train_with_agent()
 # move = model.pick_move(board)
 # board.push(move)
 # print(board)
