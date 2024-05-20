@@ -1,4 +1,4 @@
-import pygame, threading, chess
+import pygame, chess
 from MMAgent import MinMaxAgent
 from ChessGUI import GUI
 from QLearner import DEEPQ
@@ -14,6 +14,12 @@ mode = gui.mode_selection_screen()
 run = True
 selected_piece = None
 user_turn = True if mode.startswith("Player") else False
+
+def ai_move(agent, board):
+    move = agent.pick_move(board)
+    if move:
+        board.push(move)
+    print(f"AI ({agent.__class__.__name__}) made a move: {move}")
 
 while run:
     gui.timer.tick(gui.fps)
@@ -53,12 +59,20 @@ while run:
             print("AI made a move, user's turn")
         #TODO implement Qlearning vs Human
         elif mode == 'Player vs Q-Learning':
-            ...
+            move = qlearning_agent.pick_move(board=board, allow_epsilon=True)
+            if move:
+                board.push(move)
+            user_turn = True
+            print("AI made a move, user's turn")
 
         #TODO implement Minmax vs Qlearning
         elif mode == 'MinMax vs Q-Learning':
-            ...           
-
+            if board.turn == chess.WHITE:
+                ai_move(minmax_agent, board)  
+            else:
+                ai_move(qlearning_agent, board)
+            #user_turn = False
+            #print("AI move made")
     pygame.display.flip()
 
 pygame.quit()
