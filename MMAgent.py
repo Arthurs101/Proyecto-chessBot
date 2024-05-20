@@ -1,6 +1,8 @@
 # Source code of python agent
 import chess
 import math
+import numpy as np
+
 class MinMaxAgent:
     chess_Scores = {
         'p': 1,
@@ -10,31 +12,40 @@ class MinMaxAgent:
         'q': 9,
         'k':15,
     }
-    def __init__(self,max_depth=3):
+    def __init__(self,max_depth=3,epsilon=0.3):
         #more depth = more intelligent = more time to decide
         self.max_depth = max_depth 
+        self.epsilon = epsilon
     
     def pick_move(self ,board ):
         best_move_score = -1000000
         best_move = None
-        for legal_move in board.legal_moves:
-            move = chess.Move.from_uci(str(legal_move))
-            score = 0
-            if board.gives_check(legal_move):
-                score += 20
-            board.push(move)
-            if board.is_checkmate():
-                #this is the best move , no way to improve it
-                return legal_move
-            score = max(best_move_score, self.__minMaxEval(board))
-            # add more to the score if it gives check
-            
+        if np.random.rand() <= self.epsilon:
+                t = np.random.randint(0,board.legal_moves.count())
+                p = 0
+                for _ in board.legal_moves:
+                    if p == t:
+                        return _
+                    p+=1
+        else:
+            for legal_move in board.legal_moves:
+                move = chess.Move.from_uci(str(legal_move))
+                score = 0
+                if board.gives_check(legal_move):
+                    score += 20
+                board.push(move)
+                if board.is_checkmate():
+                    #this is the best move , no way to improve it
+                    return legal_move
+                score = max(best_move_score, self.__minMaxEval(board))
+                # add more to the score if it gives check
+                
 
-            board.pop()
-            if score > best_move_score:
-                best_move_score = score
-                best_move = move
-        return best_move
+                board.pop()
+                if score > best_move_score:
+                    best_move_score = score
+                    best_move = move
+            return best_move
     
     def __minMaxEval(self,board: chess.Board,is_max=False,iter=1,alpha=-math.inf,beta=math.inf):
         """
