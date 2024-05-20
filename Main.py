@@ -7,7 +7,7 @@ from QLearner import DEEPQ
 # chess board and agent
 board = chess.Board()
 minmax_agent = MinMaxAgent()
-qlearning_agent = DEEPQ()
+qlearning_agent = DEEPQ(general_moves='generalized_moves.json')
 gui = GUI()
 mode = gui.mode_selection_screen()
 # main game loop
@@ -16,10 +16,18 @@ selected_piece = None
 user_turn = True if mode.startswith("Player") else False
 
 def ai_move(agent, board):
-    move = agent.pick_move(board)
-    if move:
-        board.push(move)
-    print(f"AI ({agent.__class__.__name__}) made a move: {move}")
+    if isinstance(agent, MinMaxAgent):
+        move = agent.pick_move(board)
+        if move:
+            board.push(move)
+        print(f"AI ({agent.__class__.__name__}) made a move: {move}")
+    
+    elif isinstance(agent, DEEPQ):
+        move = agent.pick_move(board,allow_epsilon=True)
+        if move:
+            board.push(move)
+        print(f"AI ({agent.__class__.__name__}) made a move: {move}")
+
 
 while run:
     gui.timer.tick(gui.fps)

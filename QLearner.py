@@ -2,18 +2,15 @@
 Clase constructora para el agente inteligente
 '''
 import chess
-import random
 import json
 import operator
 import numpy as np
-import pickle 
-from keras.models import Sequential      # One layer after the other
+from keras.models import Sequential      
 from keras.layers import Dense  
 import tensorflow as tf
-import argparse
-import os
 from keras.models import load_model
 from MMAgent import MinMaxAgent
+
 class DEEPQ:
     prices={
             'p':1,
