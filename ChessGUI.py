@@ -34,7 +34,7 @@ class GUI:
         return pygame.transform.scale(image, size)
     
     # draw main game board
-    def draw_board(self) -> None:
+    def draw_board(self,custom_status=None) -> None:
         LIGHT_SQUARE_COLOR = 'light gray'
         DARK_SQUARE_COLOR = 'gray'
         STATUS_BAR_COLOR = 'gray'
@@ -50,7 +50,10 @@ class GUI:
         pygame.draw.rect(self.screen, STATUS_BAR_BORDER_COLOR, [400, 0, 100, self.HEIGHT], 5)
         
         status_text = ['White: Select a Piece to Move', 'White: Select a Destination!', ' Black: Select a Piece to Move', 'Black: Select a Destination!']
-        self.screen.blit(self.big_font.render(status_text[0], True, 'black'), (10, 410))
+        if custom_status:
+            self.screen.blit(self.big_font.render(custom_status, True, 'black'), (10, 410))
+        else:
+            self.screen.blit(self.big_font.render(status_text[0], True, 'black'), (10, 410))
 
     def draw_pieces(self, board: Board) -> None:
         board_str = str(board)
@@ -89,6 +92,7 @@ class GUI:
             self.draw_text('1. Player vs Minimax Agent', self.big_font, 'black', self.screen, 20, 150)
             self.draw_text('2. Player vs Q-learning Agent', self.big_font, 'black', self.screen, 20, 190)
             self.draw_text('3. Minimax Agent vs Q-learning Agent', self.big_font, 'black', self.screen, 20, 230)
+            self.draw_text('4. Q-learning Agent vs itself', self.big_font, 'black', self.screen, 20, 270)
             # Add images of the pieces in their initial positions
             for piece, (row, col) in [('R', (7, 0)), ('N', (7, 1)), ('B', (7, 2)), ('Q', (7, 3)), ('K', (7, 4)),
                                     ('B', (7, 5)), ('N', (7, 6)), ('R', (7, 7)),
@@ -100,7 +104,7 @@ class GUI:
                                     ('p', (1, 5)), ('p', (1, 6)), ('p', (1, 7))]:
                 self.screen.blit(self.pieces[piece], (col * 50 + 5, row * 50 + 5))
             # Text to continue
-            self.draw_text('Press 1, 2 or 3 to continue', self.big_font, 'black', self.screen, 20, 410)
+            self.draw_text('Press 1, 2 , 3 or 4 to continue', self.big_font, 'black', self.screen, 20, 410)
             pygame.display.flip()
 
             for event in pygame.event.get():
@@ -114,6 +118,8 @@ class GUI:
                         mode = 'Player vs Q-Learning'
                     elif event.key == pygame.K_3:
                         mode = 'MinMax vs Q-Learning'
+                    elif event.key == pygame.K_4:
+                        mode = 'Q-Learning vs Q-Learning'
                     else:
                         continue
 

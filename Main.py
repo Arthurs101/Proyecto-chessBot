@@ -2,7 +2,7 @@ import pygame, chess
 from MMAgent import MinMaxAgent
 from ChessGUI import GUI
 from QLearner import DEEPQ
-
+import time
 # Initialize chess board and agents
 board = chess.Board()
 minmax_agent = MinMaxAgent()
@@ -15,6 +15,7 @@ run = True
 selected_piece = None
 user_turn = True if mode.startswith("Player") else False
 last_mover = None  # Variable to track the last agent to make a move
+next_on_check = False #next player/agent is on check
 
 def ai_move(agent, board):
     global last_mover
@@ -43,6 +44,7 @@ while run:
     gui.timer.tick(gui.fps)
     gui.screen.fill(gui.BACKGROUND_COLOR)
     gui.draw_board()
+    
     gui.draw_pieces(board)
 
     for event in pygame.event.get():
@@ -54,6 +56,7 @@ while run:
             if selected_piece is not None:
                 move = chess.Move(selected_piece, square)
                 if move in board.legal_moves:
+                    next_on_check = board.gives_check(move)
                     board.push(move)
                     selected_piece = None
                     user_turn = False
@@ -90,18 +93,31 @@ while run:
                 if not ai_move(qlearning_agent, board):
                     print(last_mover + " wins!")
                     run = False
+        elif mode == 'Q-Learning vs Q-Learning':
+            if board.turn == chess.WHITE:
+                if not ai_move(qlearning_agent, board):
+                    print(last_mover + " wins!")
+                    run = False
+            else:
+                if not ai_move(qlearning_agent, board):
+                    print(last_mover + " wins!")
+                    run = False
+
 
     # Check for game over
     if board.is_game_over():
         result = board.result()
         if result == "1-0":
             print("White wins!")
+            gui.draw_board("White wins!")
         elif result == "0-1":
             print("Black wins!")
+            gui.draw_board("Black wins!")
         else:
             print("Draw!")
-        run = False
-
+            gui.draw_board("Draw!")
+        gui.draw_pieces(board)
+        run = False   
     pygame.display.flip()
-
+time.sleep(4)
 pygame.quit()
