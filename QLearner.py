@@ -99,7 +99,6 @@ class DEEPQ:
         best = max(Q.items(),key=operator.itemgetter(1))[0]
         move = chess.Move.from_uci(best)
         if move:
-            move.promotion = 5
             return move
         else:
             return None #very unlikely

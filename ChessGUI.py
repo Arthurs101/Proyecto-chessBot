@@ -1,5 +1,5 @@
 import pygame
-from chess import Board
+from chess import Board,QUEEN,ROOK,KNIGHT,BISHOP
 
 class GUI:
 
@@ -124,3 +124,27 @@ class GUI:
                         continue
 
         return mode
+    def promo_selection_screen(self):
+            while True:
+                self.draw_text('Select Promotion', self.big_font, 'black', self.screen, 140, 110)
+                self.draw_text('1. Queen', self.big_font, 'black', self.screen, 20, 150)
+                self.draw_text('2. Rook', self.big_font, 'black', self.screen, 20, 190)
+                self.draw_text('3. Knight', self.big_font, 'black', self.screen, 20, 230)
+                self.draw_text('4. Bishop', self.big_font, 'black', self.screen, 20, 270)
+                pygame.display.flip()
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        exit()
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_1:
+                            return QUEEN
+                        elif event.key == pygame.K_2:
+                            return ROOK
+                        elif event.key == pygame.K_3:
+                            return KNIGHT
+                        elif event.key == pygame.K_4:
+                            return BISHOP
+                        else:
+                            continue

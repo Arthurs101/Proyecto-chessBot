@@ -54,11 +54,18 @@ while run:
             x, y = gui.get_board_pos(pygame.mouse.get_pos())
             square = chess.square(x, y)  # Adjust for 0-indexed board starting from top left
             if selected_piece is not None:
-                move = chess.Move(selected_piece, square,promotion=5)
+                move = chess.Move(selected_piece, square)
                 if move in board.legal_moves:
                     next_on_check = board.gives_check(move)
                     board.push(move)
                     selected_piece = None
+                    user_turn = False
+                    last_mover = "Player"
+                    print("User move made, Turn of the AI")
+                elif chess.Move(selected_piece, square,promotion=5) in board.legal_moves:
+                    #try a promotion, if valid then has to select the promotion
+                    promotion =  gui.promo_selection_screen()
+                    board.push(chess.Move(selected_piece, square,promotion=promotion))
                     user_turn = False
                     last_mover = "Player"
                     print("User move made, Turn of the AI")
