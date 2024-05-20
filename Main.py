@@ -54,7 +54,7 @@ while run:
             x, y = gui.get_board_pos(pygame.mouse.get_pos())
             square = chess.square(x, y)  # Adjust for 0-indexed board starting from top left
             if selected_piece is not None:
-                move = chess.Move(selected_piece, square)
+                move = chess.Move(selected_piece, square,promotion=5)
                 if move in board.legal_moves:
                     next_on_check = board.gives_check(move)
                     board.push(move)

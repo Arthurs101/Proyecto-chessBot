@@ -97,7 +97,12 @@ class DEEPQ:
             Q[str(move)] = self.model.predict(self.state)
 
         best = max(Q.items(),key=operator.itemgetter(1))[0]
-        return chess.Move.from_uci(best)
+        move = chess.Move.from_uci(best)
+        if move:
+            move.promotion = 5
+            return move
+        else:
+            return None #very unlikely
     def fit_finisher(self,win_states, win_actions, l_states, l_actions,win_weights=1, l_weights=-1.2): 
         '''
         fit the model given the states and moves

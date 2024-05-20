@@ -34,6 +34,7 @@ class MinMaxAgent:
             if score > best_move_score:
                 best_move_score = score
                 best_move = move
+                best_move.promotion = 5
         return best_move
     
     def __minMaxEval(self,board: chess.Board,is_max=False,iter=1):
