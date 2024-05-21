@@ -4,6 +4,7 @@ from MMAgent import MinMaxAgent
 from ChessGUI import GUI
 from QLearner import DEEPQ
 import time
+import sys
 
 # Initialize chess board and agents
 board = chess.Board()
@@ -12,12 +13,18 @@ qlearning_agent = DEEPQ(general_moves='generalized_moves.json')
 gui = GUI()
 mode = gui.mode_selection_screen()
 
+
 # Main game loop variables
 run = True
 selected_piece = None
 user_turn = True if mode.startswith("Player") else False
 last_mover = None  # Variable to track the last agent to make a move
 next_on_check = False #next player/agent is on check
+
+#Variables para realizar bucle para que entrene la IA
+run = True
+selected_piece = None
+last_mover = None
 
 resultados_file = 'resultados.json'
 # Función para registrar los resultados
@@ -148,6 +155,63 @@ while run:
         run = False   
     pygame.display.flip()
 
+def ejecutar_juego(mode):
+    global run, board, selected_piece, last_mover
+    run = True
+    board.reset()
+    while run:
+        gui.timer.tick(gui.fps)
+        gui.screen.fill(gui.BACKGROUND_COLOR)
+        gui.draw_board()
+        gui.draw_pieces(board)
+
+        if mode == 'MinMax vs Q-Learning':
+            if board.turn == chess.WHITE:
+                if not ai_move(minmax_agent, board):
+                    print(last_mover + " gana!")
+                    run = False
+            else:
+                if not ai_move(qlearning_agent, board):
+                    print(last_mover + " gana!")
+                    run = False
+        elif mode == 'Q-Learning vs Q-Learning':
+            if board.turn == chess.WHITE:
+                if not ai_move(qlearning_agent, board):
+                    print(last_mover + " gana!")
+                    run = False
+            else:
+                if not ai_move(qlearning_agent, board):
+                    print(last_mover + " gana!")
+                    run = False
+
+        # Comprobar si el juego ha terminado
+        if board.is_game_over():
+            result = board.result()
+            registrar_resultado(result)
+            if result == "1-0":
+                print("¡Gana MinMax!")
+            elif result == "0-1":
+                print("¡Gana DEEPQ!")
+            else:
+                print("¡Empate!")
+            run = False
+        pygame.display.flip()
+
+
+if __name__ == "__main__":
+    num_iteraciones = 200  # Número de iteraciones para entrenar
+    modo_entrenamiento = '--train' in sys.argv
+
+    if modo_entrenamiento:
+        for _ in range(num_iteraciones):
+            ejecutar_juego('MinMax vs Q-Learning')
+        print("Entrenamiento completado")
+        pygame.quit()
+    else:
+        mode = gui.mode_selection_screen()
+        ejecutar_juego(mode)
+        time.sleep(4)
+        pygame.quit()
 
 
 time.sleep(4)
