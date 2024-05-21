@@ -1,8 +1,10 @@
+import json
 import pygame, chess
 from MMAgent import MinMaxAgent
 from ChessGUI import GUI
 from QLearner import DEEPQ
 import time
+
 # Initialize chess board and agents
 board = chess.Board()
 minmax_agent = MinMaxAgent(max_depth=2)
@@ -16,6 +18,26 @@ selected_piece = None
 user_turn = True if mode.startswith("Player") else False
 last_mover = None  # Variable to track the last agent to make a move
 next_on_check = False #next player/agent is on check
+
+resultados_file = 'resultados.json'
+# Función para registrar los resultados
+def registrar_resultado(result):
+    try:
+        with open(resultados_file, 'r') as file:
+            resultados = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        resultados = {"MinMax": 0, "DEEPQ": 0, "Empate": 0}
+
+    if result == "1-0":
+        resultados["MinMax"] += 1
+    elif result == "0-1":
+        resultados["DEEPQ"] += 1
+    else:
+        resultados["Empate"] += 1
+
+    with open(resultados_file, 'w') as file:
+        json.dump(resultados, file)
+
 
 def ai_move(agent, board):
     global last_mover
@@ -112,6 +134,7 @@ while run:
     # Check for game over
     if board.is_game_over():
         result = board.result()
+        registrar_resultado(result)
         if result == "1-0":
             print("White wins!")
             gui.draw_board("White wins!")
@@ -124,6 +147,8 @@ while run:
         gui.draw_pieces(board)
         run = False   
     pygame.display.flip()
+
+
 
 time.sleep(4)
 pygame.quit()

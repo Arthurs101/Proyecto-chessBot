@@ -219,8 +219,8 @@ class DEEPQ:
 # tmodel.train_self()
 
 #TESTING THE IMPORT 
-model = DEEPQ(existing_model='Qlearner.keras',general_moves='generalized_moves.json')
-model.train_with_agent()
+# model = DEEPQ(existing_model='Qlearner.keras',general_moves='generalized_moves.json')
+# model.train_with_agent()
 # move = model.pick_move(board)
 # board.push(move)
 # print(board)
